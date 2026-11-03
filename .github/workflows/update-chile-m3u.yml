@@ -1,0 +1,46 @@
+name: Actualizar lista Chile M3U.CL
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: sync-chile-m3u
+  cancel-in-progress: false
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Descargar y validar M3U publica
+        run: |
+          python3 - <<'PY'
+          import urllib.request, pathlib, sys
+          url = "https://m3u.cl/lista/CL.m3u"
+          req = urllib.request.Request(url, headers={"User-Agent": "TV-FEFE-PlaylistSync/1.0", "Accept": "*/*"})
+          try:
+              with urllib.request.urlopen(req, timeout=35) as response:
+                  data = response.read(12_000_001)
+              if len(data) > 12_000_000 or not data.lstrip(b"\xef\xbb\xbf\r\n\t ").startswith(b"#EXTM3U"):
+                  raise ValueError("Respuesta no es una lista M3U valida")
+              if data.count(b"#EXTINF") < 1:
+                  raise ValueError("Lista M3U sin canales")
+              folder = pathlib.Path("data")
+              folder.mkdir(exist_ok=True)
+              (folder / "chile.m3u").write_bytes(data)
+              print(f"Lista actualizada: {data.count(b'#EXTINF')} canales")
+          except Exception as exc:
+              print(f"No se modifica la ultima lista valida: {exc}", file=sys.stderr)
+              sys.exit(1)
+          PY
+      - name: Publicar solo cuando cambia
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/chile.m3u
+          if ! git diff --cached --quiet; then
+            git commit -m "Actualizar canales Chile M3U.CL"
+            git push
+          fi
