@@ -1,0 +1,10 @@
+IPTVFEFE - PUBLICACION CORRECTA
+
+1. NO SUBAS EL ZIP SIN DESCOMPRIMIR.
+2. Sube index.html, css/, js/, assets/, service-worker.js y los otros archivos DIRECTAMENTE a la raiz del repositorio IPTVFEFE.
+3. Al entrar a GitHub > Code debes ver index.html al lado de README.md, NO dentro de magma-tv-multiplataforma/.
+4. Settings > Pages > Deploy from a branch > main > /(root) > Save.
+5. Abre https://TU-USUARIO.github.io/IPTVFEFE/ (respetando mayusculas).
+6. Si sigue mostrando la pagina anterior, actualiza con Ctrl+F5 o borra datos del sitio/service worker.
+7. Si ves solo IPTVFEFE, probablemente Pages publico README.md, un index.html diferente o una carpeta equivocada.
+8. La compatibilidad con navegadores antiguos de TV requiere pruebas adicionales.
