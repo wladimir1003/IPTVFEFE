@@ -1,13 +1,22 @@
 import {parseM3U,safeHttpURL} from './m3u.js';
-import {loadXtream,loadEpisodes} from './xtream.js';
 import {Navigation} from './navigation.js';
 import {Player} from './player.js';
 const $=id=>document.getElementById(id), el=(tag,cls='',text='')=>{const n=document.createElement(tag);n.className=cls;n.textContent=text;return n};
 const DEMOS=[{name:'HLS test stream (Mux)',group:'Pruebas libres',kind:'live',url:'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',logo:''},{name:'Big Buck Bunny (MP4 de prueba)',group:'Pruebas libres',kind:'movies',url:'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',logo:''},{name:'Elephants Dream (MP4 de prueba)',group:'Pruebas libres',kind:'movies',url:'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',logo:''}];
 const FREE_LISTS=[['Chile M3U.CL','https://m3u.cl/lista/CL.m3u'],['Chile IPTV-org','https://iptv-org.github.io/iptv/countries/cl.m3u'],['Español IPTV-org','https://iptv-org.github.io/iptv/languages/spa.m3u']];
-const PRESETS={magma:'https://tv.m3uts.xyz',plpro:'https://plpro.org'};
-const DEFAULT_WORKER=''; // Configurable en Configuración: URL HTTPS del Worker propio
-const state={view:'live',items:[],favorites:[],source:'demo',config:{},lastFocus:null,hideTimer:null,keyboardTarget:null,keyboardValue:'',filter:'Todas'};
+const AUTO_LISTS=[
+ {name:'Chile M3U.CL',url:'https://m3u.cl/lista/CL.m3u',local:'./data/chile.m3u',mode:'live'},
+ {name:'Chile IPTV-org',url:'https://iptv-org.github.io/iptv/countries/cl.m3u',mode:'live'},
+ {name:'Español IPTV-org',url:'https://iptv-org.github.io/iptv/languages/spa.m3u',mode:'live'},
+ {name:'Cine en vivo IPTV-org',url:'https://iptv-org.github.io/iptv/categories/movies.m3u',mode:'live'},
+ {name:'Series en vivo IPTV-org',url:'https://iptv-org.github.io/iptv/categories/series.m3u',mode:'live'},
+ {name:'Películas clásicas dominio público',url:'https://raw.githubusercontent.com/onlinem3u/publicdomainm3u/main/movies.m3u',mode:'movies'},
+ {name:'Series clásicas dominio público',url:'https://raw.githubusercontent.com/onlinem3u/publicdomainm3u/main/series.m3u',mode:'series'},
+ {name:'Archive Watch',url:'https://archivewatch.org/feeds/archivewatch.m3u',mode:'vod'}
+];
+// Las listas VOD no certifican doblaje latino ni subtítulos; se mantienen fuera del catálogo visible
+// hasta que cada título disponga de metadatos de idioma comprobados.
+const state={view:'live',items:[],favorites:[],source:'auto',config:{},lastFocus:null,hideTimer:null,keyboardTarget:null,keyboardValue:'',filter:'Todas'};
 const storage={read(k,fallback){try{return JSON.parse(localStorage.getItem(k))??fallback}catch{return fallback}},write(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{notify('Almacenamiento no disponible')}}};
 state.favorites=storage.read('tvfefe-favorites-v3',[]);state.config=storage.read('tvfefe-config-v3',{});
 const nav=new Navigation(()=> !$('keyboard').hidden?$('keyboard'):!$('player').hidden&&!$('tvChannels').hidden?$('tvChannels'):$('player').hidden?$('app'):$('player'));
@@ -24,32 +33,51 @@ function updatePlayState(){$('playPause').textContent=$('video').paused?'▶ Rep
 function showControls(){$('controls').classList.remove('hidden');clearTimeout(state.hideTimer);state.hideTimer=setTimeout(()=>{if($('tvChannels').hidden)$('controls').classList.add('hidden')},5500)}
 function stop(){$('tvChannels').hidden=true;clearTimeout(state.hideTimer);player.stop();$('player').hidden=true;$('controls').classList.remove('hidden');$('videoError').hidden=true;nav.focus(state.lastFocus?.isConnected?state.lastFocus:document.querySelector('.nav[aria-current="page"]'))}
 function field(parent,label,value='',type='text'){const wrap=el('div','field'),l=el('label','',label),input=el('input','focusable');input.type=type;input.value=value;input.placeholder=label;input.autocomplete='off';l.append(input);wrap.append(l);parent.append(wrap);return input}
-function renderSettings(){const root=$('content'),box=el('div','settings');box.append(el('p','', 'Importa únicamente listas y cuentas que estés autorizado a utilizar. En GitHub Pages se exige HTTPS y los servidores deben permitir CORS. Las credenciales se guardan localmente en este dispositivo; evita usarlas en equipos compartidos.'));const preset=el('div','preset');preset.append(el('h2','','Proveedores configurables'));const source=el('select','focusable');for(const [id,label] of [['custom','Servidor personalizado'],['magma','Magma · tv.m3uts.xyz'],['plpro','PL Pro · plpro.org']]){const opt=el('option','',label);opt.value=id;source.append(opt)}preset.append(source);box.append(preset);const fields=el('div','form-grid');const m3u=field(fields,'URL M3U / M3U8 (puedes pegar con Ctrl+V)',state.config.m3u||'');m3u.setAttribute('inputmode','url');m3u.parentElement.classList.add('full');const server=field(fields,'Servidor Xtream (URL completa)',state.config.server||'');server.parentElement.classList.add('full');const username=field(fields,'Usuario Xtream',state.config.username||'');const password=field(fields,'Contraseña Xtream',state.config.password||'','password');source.addEventListener('change',()=>{if(PRESETS[source.value])server.value=PRESETS[source.value];notify('Servidor seleccionado. Introduce tus credenciales autorizadas y pulsa Conectar Xtream.')});const worker=field(fields,'URL de tu Cloudflare Worker (opcional)',state.config.worker||DEFAULT_WORKER);worker.parentElement.classList.add('full');box.append(fields);const free=el('div','preset');free.append(el('h2','','Listas gratuitas para probar'));for(const [name,url] of FREE_LISTS){free.append(button(name,async()=>{m3u.value=url;save();await importM3U(url,worker.value.trim())},'action'))}box.append(free);const pasted=el('textarea','paste-area focusable');pasted.placeholder='También puedes pegar aquí el CONTENIDO de una lista #EXTM3U (sin depender de CORS)';pasted.rows=4;box.append(pasted);const actions=el('div','settings-actions');const getConfig=()=>({m3u:m3u.value.trim(),server:server.value.trim(),username:username.value.trim(),password:password.value,worker:worker.value.trim()});const save=()=>{state.config=getConfig();storage.write('tvfefe-config-v3',state.config)};actions.append(button('Procesar texto M3U pegado',()=>{try{const items=parseM3U(pasted.value);if(!items.length)throw Error('No se encontraron canales válidos');setItems(items,'texto pegado')}catch(e){notify('Error de M3U: '+e.message)}},'primary'));actions.append(button('Cargar M3U',async()=>{save();await importM3U(state.config.m3u,state.config.worker)} ,'primary'));actions.append(button('Conectar Xtream',async()=>{save();await importXtream(state.config)},'primary'));actions.append(button('Usar demostraciones libres',()=>setItems(DEMOS.slice(),'demo')));actions.append(button('Importar archivo M3U local',()=>fileInput.click()));actions.append(button('Borrar credenciales',()=>{state.config={};storage.write('tvfefe-config-v3',{});render('settings');notify('Credenciales borradas')}));const fileInput=el('input');fileInput.type='file';fileInput.accept='.m3u,.m3u8,text/plain';fileInput.style.display='none';fileInput.addEventListener('change',async()=>{const file=fileInput.files?.[0];if(!file)return;try{const items=parseM3U(await file.text());if(!items.length)throw Error('Lista vacía');setItems(items,'archivo local')}catch(e){notify(e.message)}});actions.append(fileInput);box.append(actions);box.append(el('p','help','Para escribir con control remoto pulsa OK sobre un campo y utiliza el teclado virtual. En móviles puedes escribir directamente. No se incluyen canales de pago ni se eluden restricciones de acceso.'));root.append(box);for(const input of [m3u,server,username,password]){input.addEventListener('keydown',e=>e.stopPropagation());input.addEventListener('contextmenu',e=>e.stopPropagation())}box.append(el('p','help','Para pegar en PC usa Ctrl+V o clic derecho > Pegar. En móviles mantén presionado el campo. En TV pulsa el botón Teclado virtual junto al campo.'));for(const input of [m3u,server,username,password]){const kb=button('⌨ Teclado virtual: '+input.placeholder,()=>openKeyboard(input),'action');input.parentElement.append(kb)}}
-async function importM3U(value,workerAddress=''){
- const url=safeHttpURL(value);if(!url)return notify('Introduce una URL HTTP(S) válida');
- const worker=safeHttpURL(workerAddress);
- const chileSource=url.hostname.toLowerCase()==='m3u.cl'&&url.pathname.toLowerCase()==='/lista/cl.m3u';
- let fetchURL=url.href;
- if(worker){const proxy=new URL(worker.href);proxy.pathname=proxy.pathname.replace(/\/$/,'')+'/playlist';proxy.searchParams.set('url',url.href);fetchURL=proxy.href}
- else if(chileSource){fetchURL=new URL('./data/chile.m3u',location.href).href}
- else if(location.protocol==='https:'&&url.protocol==='http:')return notify('La lista usa HTTP. GitHub Pages requiere HTTPS; utiliza un Worker autorizado o importa el archivo local.');
- try{
-  notify(chileSource&&!worker?'Cargando copia sincronizada de Chile M3U.CL…':'Descargando lista…');
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),18000);
-  let response;try{response=await fetch(fetchURL,{signal:controller.signal,cache:'no-store'})}finally{clearTimeout(timer)}
-  if(!response.ok){
-   if(chileSource&&!worker&&response.status===404)throw Error('Falta generar la copia chilena: GitHub > Actions > Actualizar lista Chile M3U.CL > Run workflow');
-   throw Error('HTTP '+response.status);
-  }
-  const raw=await response.text();if(!raw.trimStart().startsWith('#EXTM3U'))throw Error('La respuesta no es una lista M3U válida');
-  const items=parseM3U(raw);if(!items.length)throw Error('Lista vacía o sin canales HTTP(S)');
-  setItems(items,chileSource&&!worker?'Chile M3U.CL (sincronizada)':'M3U');
- }catch(e){
-  const detail=e.name==='AbortError'?'Tiempo de espera agotado':e.message;
-  notify('Error al importar: '+detail+(chileSource&&!worker?'':' . Comprueba CORS/HTTPS, importa un archivo local o utiliza tu Worker.'));
- }
+function renderSettings(){
+ const root=$('content'),box=el('div','settings');
+ box.append(el('p','', 'Las listas públicas se cargan automáticamente al abrir TV FEFE. Los títulos de películas y series solo aparecen si su idioma está verificado. Algunos enlaces pueden fallar por CORS, HTTPS o restricciones del proveedor.'));
+ const fields=el('div','form-grid');
+ const m3u=field(fields,'URL M3U / M3U8 (opcional)',state.config.m3u||'');
+ m3u.setAttribute('inputmode','url');m3u.parentElement.classList.add('full');box.append(fields);
+ const free=el('div','preset');free.append(el('h2','','Fuentes automáticas'));
+ for(const src of AUTO_LISTS)free.append(el('p','help',src.name+' · '+src.url));
+ box.append(free);
+ const pasted=el('textarea','paste-area focusable');pasted.placeholder='Pegar contenido #EXTM3U';pasted.rows=4;box.append(pasted);
+ const actions=el('div','settings-actions');
+ actions.append(button('Actualizar fuentes automáticas',loadAutoLists,'primary'));
+ actions.append(button('Procesar texto M3U pegado',()=>{try{const items=parseM3U(pasted.value);if(!items.length)throw Error('No se encontraron enlaces válidos');setItems(items,'texto pegado')}catch(e){notify('Error de M3U: '+e.message)}},'primary'));
+ actions.append(button('Cargar URL M3U',async()=>{state.config={m3u:m3u.value.trim()};storage.write('tvfefe-config-v3',state.config);await importM3U(state.config.m3u)}));
+ actions.append(button('Importar archivo M3U local',()=>fileInput.click()));
+ const fileInput=el('input');fileInput.type='file';fileInput.accept='.m3u,.m3u8,text/plain';fileInput.hidden=true;
+ fileInput.addEventListener('change',async()=>{const file=fileInput.files?.[0];if(!file)return;try{const items=parseM3U(await file.text());if(!items.length)throw Error('Lista vacía');setItems(items,'archivo local')}catch(e){notify(e.message)}});
+ actions.append(fileInput);box.append(actions);root.append(box);
+ m3u.addEventListener('keydown',e=>e.stopPropagation());m3u.addEventListener('contextmenu',e=>e.stopPropagation());
+ m3u.parentElement.append(button('⌨ Teclado virtual: URL M3U',()=>openKeyboard(m3u),'action'));
 }
-async function importXtream(config){try{notify('Conectando Xtream…');const items=await loadXtream(config);setItems(items,'Xtream')}catch(e){notify('Error Xtream: '+e.message+' (comprueba CORS/HTTPS)')}}
+async function fetchPlaylist(url){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+ try{const r=await fetch(url,{signal:controller.signal,cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const raw=await r.text();if(!raw.trimStart().startsWith('#EXTM3U'))throw Error('Formato M3U inválido');return parseM3U(raw)}
+ finally{clearTimeout(timer)}
+}
+async function importM3U(value){
+ const url=safeHttpURL(value);if(!url)return notify('Introduce una URL HTTP(S) válida');
+ if(location.protocol==='https:'&&url.protocol==='http:'&&url.hostname!=='m3u.cl')return notify('La lista usa HTTP y GitHub Pages exige HTTPS.');
+ try{const chile=url.hostname==='m3u.cl'&&url.pathname.toLowerCase()==='/lista/cl.m3u';const items=await fetchPlaylist(chile?'./data/chile.m3u':url.href);if(!items.length)throw Error('Lista vacía');setItems(items,'M3U')}catch(e){notify('Error al importar: '+e.message+' (CORS/HTTPS o enlace no disponible)')}
+}
+let autoLoading=false;
+async function loadAutoLists(){
+ if(autoLoading)return;autoLoading=true;notify('Actualizando listas públicas…');
+ const results=await Promise.allSettled(AUTO_LISTS.map(async src=>{
+  const parsed=await fetchPlaylist(src.local||src.url);
+  return parsed.map(item=>({...item,kind:src.mode==='vod'?item.kind:src.mode,group:src.name+' · '+(item.group||'General'),sourceName:src.name,languageVerified:false}));
+ }));
+ const merged=[],seen=new Set();let ok=0;
+ for(const result of results){if(result.status!=='fulfilled')continue;ok++;for(const item of result.value){const key=item.kind+'|'+item.url;if(!seen.has(key)){seen.add(key);merged.push(item)}}}
+ autoLoading=false;
+ if(!ok){notify('No se pudieron cargar las fuentes (red, CORS o HTTPS). Puedes importar una lista local.');return}
+ state.items=merged;state.source='Fuentes públicas';state.filter='Todas';render(state.view==='settings'?'live':state.view);
+ notify(merged.length+' enlaces cargados de '+ok+'/'+AUTO_LISTS.length+' fuentes. VOD sin idioma verificado permanece oculto.');
+}
 function openKeyboard(input){state.keyboardTarget=input;state.keyboardValue=input.value;$('keyboard').hidden=false;const keys=$('keys');keys.replaceChildren();const chars='1234567890QWERTYUIOPASDFGHJKLZXCVBNMabcdefghijklmnopqrstuvwxyz';for(const c of chars)keys.append(button(c,()=>{state.keyboardValue+=c;updateTyped()},'key'));for(const [label,value] of [['.', '.'],['/','/'],[':',':'],['-','-'],['_','_'],['@','@'],['?','?'],['=','='],['&','&'],['%','%']])keys.append(button(label,()=>{state.keyboardValue+=value;updateTyped()},'key'));keys.append(button('Espacio',()=>{state.keyboardValue+=' ';updateTyped()},'key wide'));keys.append(button('Borrar',()=>{state.keyboardValue=state.keyboardValue.slice(0,-1);updateTyped()},'key wide'));keys.append(button('Aceptar',()=>{input.value=state.keyboardValue;closeKeyboard()},'key wide'));updateTyped();nav.focus(keys.querySelector('button'))}
 function updateTyped(){$('typed').textContent=state.keyboardTarget?.type==='password'?'•'.repeat(state.keyboardValue.length):state.keyboardValue||' '}
 function closeKeyboard(){$('keyboard').hidden=true;nav.focus(state.keyboardTarget)}
@@ -72,7 +100,7 @@ $('tvChannelToggle').setAttribute('aria-controls','tvChannels');$('tvChannelTogg
 $('tvClose').addEventListener('click',tvCloseChannels);
 $('tvChannelTop')?.addEventListener('click',()=>{if($('tvChannels').hidden)tvOpenChannels();else tvCloseChannels()});
 
-render('live');setItems(DEMOS.slice(),'demo');
+render('live');loadAutoLists();
 if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
 
 window.__tvFefeReady=true;
