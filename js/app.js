@@ -33,50 +33,73 @@ function updatePlayState(){$('playPause').textContent=$('video').paused?'▶ Rep
 function showControls(){$('controls').classList.remove('hidden');clearTimeout(state.hideTimer);state.hideTimer=setTimeout(()=>{if($('tvChannels').hidden)$('controls').classList.add('hidden')},5500)}
 function stop(){$('tvChannels').hidden=true;clearTimeout(state.hideTimer);player.stop();$('player').hidden=true;$('controls').classList.remove('hidden');$('videoError').hidden=true;nav.focus(state.lastFocus?.isConnected?state.lastFocus:document.querySelector('.nav[aria-current="page"]'))}
 function field(parent,label,value='',type='text'){const wrap=el('div','field'),l=el('label','',label),input=el('input','focusable');input.type=type;input.value=value;input.placeholder=label;input.autocomplete='off';l.append(input);wrap.append(l);parent.append(wrap);return input}
+const CUSTOM_KEY='tvfefe-custom-sources-v1';
+let customSources=storage.read(CUSTOM_KEY,[]).filter(x=>x&&x.name&&safeHttpURL(x.url));
+let sourceStatus={};
+function allSources(){return [...AUTO_LISTS,...customSources]}
+function makeSourceSelect(){
+ const select=el('select','focusable');select.setAttribute('aria-label','Seleccionar listado IPTV');
+ for(const src of allSources()){const option=el('option','',src.name+(sourceStatus[src.url]==='ok'?' · cargó':sourceStatus[src.url]==='fail'?' · error':' · sin comprobar'));option.value=src.url;select.append(option)}
+ return select
+}
+async function loadSource(src){
+ if(!src)return;
+ notify('Comprobando lista: '+src.name);
+ try{
+  const parsed=await fetchPlaylist(src.local||src.url);
+  if(!parsed.length)throw Error('No hay entradas válidas');
+  sourceStatus[src.url]='ok';
+  const items=parsed.map(item=>({...item,kind:src.mode==='vod'?item.kind:src.mode==='custom'?item.kind:src.mode,group:item.group||src.name,sourceName:src.name,languageVerified:false}));
+  state.config.selectedSource=src.url;storage.write('tvfefe-config-v3',state.config);
+  setItems(items,src.name);notify(src.name+': '+items.length+' enlaces cargados (reproducción individual no comprobada)');
+ }catch(e){sourceStatus[src.url]='fail';notify('No se pudo cargar '+src.name+': '+e.message+' (red/CORS/HTTPS)');if(state.view==='settings')render('settings')}
+}
 function renderSettings(){
  const root=$('content'),box=el('div','settings');
- box.append(el('p','', 'Las listas públicas se cargan automáticamente al abrir TV FEFE. Los títulos de películas y series solo aparecen si su idioma está verificado. Algunos enlaces pueden fallar por CORS, HTTPS o restricciones del proveedor.'));
- const fields=el('div','form-grid');
- const m3u=field(fields,'URL M3U / M3U8 (opcional)',state.config.m3u||'');
- m3u.setAttribute('inputmode','url');m3u.parentElement.classList.add('full');box.append(fields);
- const free=el('div','preset');free.append(el('h2','','Fuentes automáticas'));
- for(const src of AUTO_LISTS)free.append(el('p','help',src.name+' · '+src.url));
- box.append(free);
- const pasted=el('textarea','paste-area focusable');pasted.placeholder='Pegar contenido #EXTM3U';pasted.rows=4;box.append(pasted);
+ box.append(el('p','', 'Elige una lista y pulsa Cargar listado. La marca “cargó” confirma la descarga de su índice M3U, no que todos los videos funcionen. Las películas y series sin idioma verificado permanecen ocultas.'));
+ const free=el('div','preset');free.append(el('h2','','Listados disponibles'));
+ const select=makeSourceSelect();select.value=state.config.selectedSource||AUTO_LISTS[0].url;free.append(select);
+ const status=el('p','help','Selecciona una fuente. Los enlaces con error no se cargan automáticamente.');free.append(status);
  const actions=el('div','settings-actions');
- actions.append(button('Actualizar fuentes automáticas',loadAutoLists,'primary'));
- actions.append(button('Procesar texto M3U pegado',()=>{try{const items=parseM3U(pasted.value);if(!items.length)throw Error('No se encontraron enlaces válidos');setItems(items,'texto pegado')}catch(e){notify('Error de M3U: '+e.message)}},'primary'));
- actions.append(button('Cargar URL M3U',async()=>{state.config={m3u:m3u.value.trim()};storage.write('tvfefe-config-v3',state.config);await importM3U(state.config.m3u)}));
- actions.append(button('Importar archivo M3U local',()=>fileInput.click()));
+ actions.append(button('Cargar listado seleccionado',()=>loadSource(allSources().find(x=>x.url===select.value)),'primary'));
+ actions.append(button('Comprobar todos los listados',async()=>{
+  status.textContent='Comprobando índices…';
+  const results=await Promise.allSettled(allSources().map(async src=>{const items=await fetchPlaylist(src.local||src.url);if(!items.length)throw Error('Vacía');return items.length}));
+  const sources=allSources();let ok=0;results.forEach((r,i)=>{sourceStatus[sources[i].url]=r.status==='fulfilled'?'ok':'fail';if(r.status==='fulfilled')ok++});
+  status.textContent=ok+' de '+sources.length+' listados descargaron su índice. Esto no verifica la reproducción de cada canal.';
+  const current=select.value;const next=makeSourceSelect();next.value=current;select.replaceWith(next);next.addEventListener('change',()=>{select.value=next.value});
+ }));
+ free.append(actions);box.append(free);
+ const fields=el('div','form-grid');
+ const name=field(fields,'Nombre del nuevo listado','');
+ const m3u=field(fields,'URL HTTPS del nuevo listado M3U',state.config.m3u||'');
+ m3u.setAttribute('inputmode','url');m3u.parentElement.classList.add('full');box.append(fields);
+ const customActions=el('div','settings-actions');
+ customActions.append(button('Agregar nuevo listado',()=>{
+  const url=safeHttpURL(m3u.value),title=name.value.trim();
+  if(!title||!url||url.protocol!=='https:')return notify('Escribe un nombre y una URL HTTPS válida');
+  if(allSources().some(x=>x.url===url.href))return notify('Esta URL ya está agregada');
+  customSources.push({name:title,url:url.href,mode:'custom'});storage.write(CUSTOM_KEY,customSources);
+  state.config.m3u=url.href;state.config.selectedSource=url.href;storage.write('tvfefe-config-v3',state.config);
+  render('settings');notify('Listado agregado: selecciónalo para comprobarlo');
+ },'primary'));
+ customActions.append(button('Eliminar listado personalizado seleccionado',()=>{
+  const url=select.value;if(!customSources.some(x=>x.url===url))return notify('Los listados públicos predeterminados no se eliminan aquí');
+  customSources=customSources.filter(x=>x.url!==url);storage.write(CUSTOM_KEY,customSources);
+  state.config.selectedSource=AUTO_LISTS[0].url;storage.write('tvfefe-config-v3',state.config);render('settings');
+ }));
+ const pasted=el('textarea','paste-area focusable');pasted.placeholder='O pega contenido #EXTM3U';pasted.rows=4;box.append(pasted);
+ customActions.append(button('Cargar texto M3U pegado',()=>{const items=parseM3U(pasted.value);if(items.length)setItems(items,'texto pegado');else notify('No hay enlaces válidos')}));
+ customActions.append(button('Importar archivo M3U local',()=>fileInput.click()));
  const fileInput=el('input');fileInput.type='file';fileInput.accept='.m3u,.m3u8,text/plain';fileInput.hidden=true;
  fileInput.addEventListener('change',async()=>{const file=fileInput.files?.[0];if(!file)return;try{const items=parseM3U(await file.text());if(!items.length)throw Error('Lista vacía');setItems(items,'archivo local')}catch(e){notify(e.message)}});
- actions.append(fileInput);box.append(actions);root.append(box);
- m3u.addEventListener('keydown',e=>e.stopPropagation());m3u.addEventListener('contextmenu',e=>e.stopPropagation());
- m3u.parentElement.append(button('⌨ Teclado virtual: URL M3U',()=>openKeyboard(m3u),'action'));
+ customActions.append(fileInput);box.append(customActions);root.append(box);
+ for(const input of [name,m3u]){input.addEventListener('keydown',e=>e.stopPropagation());input.parentElement.append(button('⌨ Teclado virtual: '+input.placeholder,()=>openKeyboard(input),'action'))}
 }
 async function fetchPlaylist(url){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
  try{const r=await fetch(url,{signal:controller.signal,cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const raw=await r.text();if(!raw.trimStart().startsWith('#EXTM3U'))throw Error('Formato M3U inválido');return parseM3U(raw)}
  finally{clearTimeout(timer)}
-}
-async function importM3U(value){
- const url=safeHttpURL(value);if(!url)return notify('Introduce una URL HTTP(S) válida');
- if(location.protocol==='https:'&&url.protocol==='http:'&&url.hostname!=='m3u.cl')return notify('La lista usa HTTP y GitHub Pages exige HTTPS.');
- try{const chile=url.hostname==='m3u.cl'&&url.pathname.toLowerCase()==='/lista/cl.m3u';const items=await fetchPlaylist(chile?'./data/chile.m3u':url.href);if(!items.length)throw Error('Lista vacía');setItems(items,'M3U')}catch(e){notify('Error al importar: '+e.message+' (CORS/HTTPS o enlace no disponible)')}
-}
-let autoLoading=false;
-async function loadAutoLists(){
- if(autoLoading)return;autoLoading=true;notify('Actualizando listas públicas…');
- const results=await Promise.allSettled(AUTO_LISTS.map(async src=>{
-  const parsed=await fetchPlaylist(src.local||src.url);
-  return parsed.map(item=>({...item,kind:src.mode==='vod'?item.kind:src.mode,group:src.name+' · '+(item.group||'General'),sourceName:src.name,languageVerified:false}));
- }));
- const merged=[],seen=new Set();let ok=0;
- for(const result of results){if(result.status!=='fulfilled')continue;ok++;for(const item of result.value){const key=item.kind+'|'+item.url;if(!seen.has(key)){seen.add(key);merged.push(item)}}}
- autoLoading=false;
- if(!ok){notify('No se pudieron cargar las fuentes (red, CORS o HTTPS). Puedes importar una lista local.');return}
- state.items=merged;state.source='Fuentes públicas';state.filter='Todas';render(state.view==='settings'?'live':state.view);
- notify(merged.length+' enlaces cargados de '+ok+'/'+AUTO_LISTS.length+' fuentes. VOD sin idioma verificado permanece oculto.');
 }
 function openKeyboard(input){state.keyboardTarget=input;state.keyboardValue=input.value;$('keyboard').hidden=false;const keys=$('keys');keys.replaceChildren();const chars='1234567890QWERTYUIOPASDFGHJKLZXCVBNMabcdefghijklmnopqrstuvwxyz';for(const c of chars)keys.append(button(c,()=>{state.keyboardValue+=c;updateTyped()},'key'));for(const [label,value] of [['.', '.'],['/','/'],[':',':'],['-','-'],['_','_'],['@','@'],['?','?'],['=','='],['&','&'],['%','%']])keys.append(button(label,()=>{state.keyboardValue+=value;updateTyped()},'key'));keys.append(button('Espacio',()=>{state.keyboardValue+=' ';updateTyped()},'key wide'));keys.append(button('Borrar',()=>{state.keyboardValue=state.keyboardValue.slice(0,-1);updateTyped()},'key wide'));keys.append(button('Aceptar',()=>{input.value=state.keyboardValue;closeKeyboard()},'key wide'));updateTyped();nav.focus(keys.querySelector('button'))}
 function updateTyped(){$('typed').textContent=state.keyboardTarget?.type==='password'?'•'.repeat(state.keyboardValue.length):state.keyboardValue||' '}
@@ -100,7 +123,7 @@ $('tvChannelToggle').setAttribute('aria-controls','tvChannels');$('tvChannelTogg
 $('tvClose').addEventListener('click',tvCloseChannels);
 $('tvChannelTop')?.addEventListener('click',()=>{if($('tvChannels').hidden)tvOpenChannels();else tvCloseChannels()});
 
-render('live');loadAutoLists();
+render('live');loadSource(AUTO_LISTS[0]);
 if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
 
 window.__tvFefeReady=true;
