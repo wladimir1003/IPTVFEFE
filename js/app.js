@@ -24,7 +24,7 @@ const player=new Player($('video'),msg=>{$('videoError').textContent=msg;$('vide
 function notify(message){$('status').textContent=message;$('toast').textContent=message;$('toast').style.display='block';clearTimeout(notify.timer);notify.timer=setTimeout(()=>$('toast').style.display='none',4500)}
 function button(text,fn,cls='action'){const b=el('button',cls+' focusable',text);b.addEventListener('click',fn);return b}
 function setItems(items,source){state.items=items;state.source=source;state.filter='Todas';notify(`${items.length} contenidos · ${source}`);render(state.view==='settings'?'live':state.view)}
-function render(view){state.view=view;const titles={live:'TV en vivo',movies:'Películas',series:'Series',favorites:'Favoritos',settings:'Configuración'};$('title').textContent=titles[view];document.querySelectorAll('.nav').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));$('toolbar').replaceChildren();$('content').replaceChildren();if(view==='settings')renderSettings();else renderCatalog();nav.focus(document.querySelector(`.nav[data-view="${view}"]`))}
+function render(view){state.view=view;const titles={live:'TV en vivo',movies:'Películas',series:'Series',favorites:'Favoritos',settings:'Configuración',p2p:'Buscar P2P'};$('title').textContent=titles[view];document.querySelectorAll('.nav').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));$('toolbar').replaceChildren();$('content').replaceChildren();if(view==='settings')renderSettings();else if(view==='p2p')renderP2P();else renderCatalog();nav.focus(document.querySelector(`.nav[data-view="${view}"]`))}
 function isFav(item){return state.favorites.includes(item.url||item.name)}
 function toggleFav(item){const id=item.url||item.name;state.favorites=isFav(item)?state.favorites.filter(x=>x!==id):[...state.favorites,id];storage.write('tvfefe-favorites-v3',state.favorites);render(state.view)}
 function renderCatalog(){const root=$('content');let items=state.view==='favorites'?state.items.filter(isFav):state.items.filter(x=>x.kind===state.view);if(state.view==='movies'||state.view==='series'){const total=items.length;items=items.filter(x=>x.languageVerified===true&&(x.audioLanguage==='es-419'||(x.audioLanguage==='en'&&x.subtitleLanguage==='es')));const info=el('p','help',`Catálogo con idioma verificado: ${items.length} de ${total}. Preferencia: español latino; alternativa: inglés con subtítulos en español. Los elementos sin verificación no se muestran.`);root.append(info)}const search=el('input','search focusable');search.placeholder='Buscar contenido';search.setAttribute('aria-label','Buscar contenido');$('toolbar').append(search);const category=el('select','focusable');const cats=['Todas',...new Set(items.map(x=>x.group||'General'))];for(const c of cats){const option=el('option','',c);option.value=c;category.append(option)}category.value=cats.includes(state.filter)?state.filter:'Todas';$('toolbar').append(category);const list=el('div');root.append(list);const paint=()=>{list.replaceChildren();const query=search.value.toLocaleLowerCase();const selected=items.filter(x=>(category.value==='Todas'||x.group===category.value)&&x.name.toLocaleLowerCase().includes(query));if(!selected.length){list.append(el('p','empty','No hay contenidos para mostrar. Usa Configuración para cargar una lista o activar las demostraciones.'));return}const groups=[...new Set(selected.map(x=>x.group||'General'))];for(const group of groups){list.append(el('h2','section-heading',group));const grid=el('div','grid');for(const item of selected.filter(x=>(x.group||'General')===group)){const tile=button('',()=>openItem(item),'tile');tile.setAttribute('aria-label','Reproducir '+item.name);if(item.logo&&safeHttpURL(item.logo)){const img=el('img');img.src=item.logo;img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>img.replaceWith(el('div','placeholder','▶'));tile.append(img)}else tile.append(el('div','placeholder','▶'));tile.append(el('strong','',item.name));tile.append(el('small','',item.kind==='live'?'Canal':item.kind==='series'?'Serie':'Video'));const star=button(isFav(item)?'★ Favorito':'☆ Favorito',()=>toggleFav(item),'filter fav');grid.append(tile,star)}list.append(grid)}};category.addEventListener('change',()=>{state.filter=category.value;paint()});search.addEventListener('input',paint);paint()}
@@ -100,6 +100,63 @@ async function fetchPlaylist(url){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
  try{const r=await fetch(url,{signal:controller.signal,cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const raw=await r.text();if(!raw.trimStart().startsWith('#EXTM3U'))throw Error('Formato M3U inválido');return parseM3U(raw)}
  finally{clearTimeout(timer)}
+}
+
+// P2P: no indexa redes públicas ni distribuye material protegido.
+// WebTorrent en navegador requiere pares WebRTC. Backend opcional solo consulta catálogo autorizado.
+let torrentClient=null,torrentSession=null;
+function renderP2P(){
+ const root=$('content'),panel=el('div','settings');
+ panel.append(el('h2','','Películas P2P · WebTorrent'));
+ panel.append(el('p','help','Utiliza enlaces magnet de contenido propio, dominio público o con permiso de distribución. En el navegador solo funcionan pares WebTorrent/WebRTC. Los pares pueden ver tu IP.'));
+ const magnet=field(panel,'Enlace magnet autorizado','');
+ const status=el('p','help','Sin transferencia activa');panel.append(status);
+ const actions=el('div','settings-actions');
+ actions.append(button('Abrir magnet con WebTorrent',async()=>{
+  const value=magnet.value.trim();if(!/^magnet:\?xt=urn:btih:[a-zA-Z0-9]{32,40}(?:&|$)/.test(value))return notify('Introduce un enlace magnet BitTorrent válido');
+  if(!window.WebTorrent)return notify('No se cargó WebTorrent. Revisa la conexión y el bloqueador de scripts.');
+  try{
+   if(!torrentClient)torrentClient=new window.WebTorrent();
+   if(torrentSession){torrentClient.remove(torrentSession.infoHash);torrentSession=null}
+   status.textContent='Buscando pares WebRTC…';
+   torrentClient.add(value,torrent=>{
+    torrentSession=torrent;
+    const videos=torrent.files.filter(f=>/\.(mp4|webm|m4v)$/i.test(f.name));
+    if(!videos.length){status.textContent='No hay video MP4/WebM compatible en este torrent';return}
+    const file=videos.sort((a,b)=>b.length-a.length)[0];
+    const video=$('video');stop();$('player').hidden=false;$('playingTitle').textContent=file.name;$('videoError').hidden=true;
+    file.renderTo(video,{autoplay:true},err=>{if(err)notify('Error WebTorrent: '+err.message)});
+    status.textContent='Conectado: '+torrent.name+' · '+torrent.numPeers+' pares';
+   });
+  }catch(e){notify('P2P: '+e.message)}
+ },'primary'));
+ actions.append(button('Detener transferencia P2P',()=>{if(torrentSession&&torrentClient){torrentClient.remove(torrentSession.infoHash);torrentSession=null}stop();status.textContent='Transferencia detenida'}));
+ panel.append(actions);
+ panel.append(el('h2','','Servidor auxiliar · catálogo autorizado'));
+ panel.append(el('p','help','Configura un backend HTTPS propio con endpoint GET /api/catalog?q=... . El backend debe devolver JSON con items [{title,language,subtitles,url}]. No se incluye un servidor desplegado.'));
+ const endpoint=field(panel,'URL HTTPS del servidor auxiliar',storage.read('tvfefe-p2p-backend',''));
+ const query=field(panel,'Buscar título','');
+ const results=el('div');panel.append(results);
+ const backendActions=el('div','settings-actions');
+ backendActions.append(button('Buscar en mi catálogo',async()=>{
+  const u=safeHttpURL(endpoint.value);if(!u||u.protocol!=='https:')return notify('Indica una URL HTTPS válida');
+  storage.write('tvfefe-p2p-backend',u.href);results.replaceChildren();
+  try{
+   const api=new URL('api/catalog',u.href.endsWith('/')?u.href:u.href+'/');api.searchParams.set('q',query.value.trim());
+   const response=await fetch(api.href,{signal:AbortSignal.timeout(12000)});if(!response.ok)throw Error('HTTP '+response.status);
+   const data=await response.json();const items=Array.isArray(data.items)?data.items:[];
+   if(!items.length){results.append(el('p','help','No hay títulos en el catálogo autorizado'));return}
+   for(const item of items.slice(0,100)){
+    if(!item||typeof item.title!=='string')continue;
+    if(item.language!=='es-419'&&!(item.language==='en'&&item.subtitles==='es'))continue;
+    const entry=el('div','preset');entry.append(el('strong','',item.title));entry.append(el('p','help',item.language==='es-419'?'Español latino':'Inglés con subtítulos ES'));
+    if(typeof item.url==='string'&&/^magnet:\?xt=urn:btih:/i.test(item.url))entry.append(button('Usar magnet',()=>{magnet.value=item.url;notify('Magnet copiado al campo P2P')}));
+    results.append(entry);
+   }
+   if(!results.children.length)results.append(el('p','help','No hay resultados con idioma confirmado'));
+  }catch(e){notify('Servidor auxiliar no disponible: '+e.message)}
+ },'primary'));panel.append(backendActions);root.append(panel);
+ for(const input of [magnet,endpoint,query])input.addEventListener('keydown',e=>e.stopPropagation());
 }
 function openKeyboard(input){state.keyboardTarget=input;state.keyboardValue=input.value;$('keyboard').hidden=false;const keys=$('keys');keys.replaceChildren();const chars='1234567890QWERTYUIOPASDFGHJKLZXCVBNMabcdefghijklmnopqrstuvwxyz';for(const c of chars)keys.append(button(c,()=>{state.keyboardValue+=c;updateTyped()},'key'));for(const [label,value] of [['.', '.'],['/','/'],[':',':'],['-','-'],['_','_'],['@','@'],['?','?'],['=','='],['&','&'],['%','%']])keys.append(button(label,()=>{state.keyboardValue+=value;updateTyped()},'key'));keys.append(button('Espacio',()=>{state.keyboardValue+=' ';updateTyped()},'key wide'));keys.append(button('Borrar',()=>{state.keyboardValue=state.keyboardValue.slice(0,-1);updateTyped()},'key wide'));keys.append(button('Aceptar',()=>{input.value=state.keyboardValue;closeKeyboard()},'key wide'));updateTyped();nav.focus(keys.querySelector('button'))}
 function updateTyped(){$('typed').textContent=state.keyboardTarget?.type==='password'?'•'.repeat(state.keyboardValue.length):state.keyboardValue||' '}
