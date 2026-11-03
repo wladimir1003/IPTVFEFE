@@ -57,6 +57,7 @@ function tvOpenChannels(){try{tvPaintChannels();$('tvChannels').hidden=false;$('
 function tvCloseChannels(){$('tvChannels').hidden=true;$('tvChannelToggle').setAttribute('aria-expanded','false');nav.focus($('tvChannelToggle'));showControls()}
 $('tvChannelToggle').setAttribute('aria-controls','tvChannels');$('tvChannelToggle').setAttribute('aria-expanded','false');$('tvChannelToggle').addEventListener('click',e=>{e.stopPropagation();if($('tvChannels').hidden)tvOpenChannels();else tvCloseChannels()});
 $('tvClose').addEventListener('click',tvCloseChannels);
+$('tvChannelTop')?.addEventListener('click',()=>{if($('tvChannels').hidden)tvOpenChannels();else tvCloseChannels()});
 
 render('live');setItems(DEMOS.slice(),'demo');
 if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
