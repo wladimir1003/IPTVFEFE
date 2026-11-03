@@ -36,11 +36,9 @@ function renderCinema(){
  const search=el('input','search focusable');search.placeholder='Buscar título, año o género';search.setAttribute('aria-label','Buscar títulos');bar.append(search);
  const genre=el('select','focusable');genre.setAttribute('aria-label','Filtrar género');bar.append(genre);
  const results=el('div','cinema-grid');root.append(results);
+ const items=state.cinema.filter(x=>x.kind===state.view);
+ for(const name of ['Todos los géneros',...new Set(items.map(x=>x.group||'Cine'))]){const option=el('option','',name);option.value=name;genre.append(option)}
  const paint=()=>{
-  const items=state.cinema.filter(x=>x.kind===state.view);
-  genre.replaceChildren();for(const name of ['Todos los géneros',...new Set(items.map(x=>x.group||'Cine'))]){
-   const option=el('option','',name);option.value=name;genre.append(option);
-  }
   const term=search.value.trim().toLocaleLowerCase();
   const matched=items.filter(x=>(genre.value==='Todos los géneros'||x.group===genre.value)&&[x.name,x.group,String(x.year)].some(v=>String(v||'').toLocaleLowerCase().includes(term)));
   results.replaceChildren();
@@ -67,9 +65,8 @@ function renderCinema(){
    info.append(actions);card.append(info);results.append(card);
   }
  };
- let lastGenre='Todos los géneros';
- genre.addEventListener('change',()=>{lastGenre=genre.value;paint()});
- search.addEventListener('input',()=>{const selected=genre.value;paint();genre.value=selected;});
+ genre.addEventListener('change',paint);
+ search.addEventListener('input',paint);
  paint();
 }
 async function refreshCinema(){
