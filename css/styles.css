@@ -22,3 +22,12 @@ input,textarea,select{user-select:text;-webkit-user-select:text;touch-action:man
 #tvChannels .tv-channel:focus-visible{outline:3px solid #56d9ff;outline-offset:1px}
 #controls{z-index:6}
 #tvInfo{z-index:4}
+
+/* TV FEFE 4.2: botón superior permanente y datos visibles */
+#tvInfo{pointer-events:auto!important;z-index:12!important;display:flex!important;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:linear-gradient(#000e,#0006)!important}
+#tvChannelTop{pointer-events:auto;cursor:pointer;border:1px solid #ffffff80;background:#122b45e8;color:white;padding:11px 18px;border-radius:10px;font-weight:700;min-height:44px}
+#tvChannelTop:hover,#tvChannelTop:focus-visible{background:#28577b}
+#tvClock,#tvWeather{display:inline-block!important;visibility:visible!important;color:white!important}
+#tvChannels{z-index:40!important;top:0;bottom:0}
+#controls{z-index:10}
+@media(max-width:520px){#tvInfo{gap:5px}#tvChannelTop{padding:8px;font-size:12px}}
