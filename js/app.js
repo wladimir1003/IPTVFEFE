@@ -1,6 +1,7 @@
 import {parseM3U,safeHttpURL} from './m3u.js';
 import {Navigation} from './navigation.js';
 import {Player} from './player.js';
+import {loadCinemaCatalog} from './cinema.js';
 const $=id=>document.getElementById(id), el=(tag,cls='',text='')=>{const n=document.createElement(tag);n.className=cls;n.textContent=text;return n};
 const DEMOS=[{name:'HLS test stream (Mux)',group:'Pruebas libres',kind:'live',url:'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',logo:''},{name:'Big Buck Bunny (MP4 de prueba)',group:'Pruebas libres',kind:'movies',url:'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',logo:''},{name:'Elephants Dream (MP4 de prueba)',group:'Pruebas libres',kind:'movies',url:'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',logo:''}];
 const FREE_LISTS=[['Chile M3U.CL','https://m3u.cl/lista/CL.m3u'],['Chile IPTV-org','https://iptv-org.github.io/iptv/countries/cl.m3u'],['Español IPTV-org','https://iptv-org.github.io/iptv/languages/spa.m3u']];
@@ -16,7 +17,7 @@ const AUTO_LISTS=[
 ];
 // Las listas VOD no certifican doblaje latino ni subtítulos; se mantienen fuera del catálogo visible
 // hasta que cada título disponga de metadatos de idioma comprobados.
-const state={view:'live',items:[],favorites:[],source:'auto',config:{},lastFocus:null,hideTimer:null,keyboardTarget:null,keyboardValue:'',filter:'Todas'};
+const state={view:'live',items:[],cinema:[],favorites:[],source:'auto',config:{},lastFocus:null,hideTimer:null,keyboardTarget:null,keyboardValue:'',filter:'Todas'};
 const storage={read(k,fallback){try{return JSON.parse(localStorage.getItem(k))??fallback}catch{return fallback}},write(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{notify('Almacenamiento no disponible')}}};
 state.favorites=storage.read('tvfefe-favorites-v3',[]);state.config=storage.read('tvfefe-config-v3',{});
 const nav=new Navigation(()=> !$('keyboard').hidden?$('keyboard'):!$('player').hidden&&!$('tvChannels').hidden?$('tvChannels'):$('player').hidden?$('app'):$('player'));
@@ -24,10 +25,57 @@ const player=new Player($('video'),msg=>{$('videoError').textContent=msg;$('vide
 function notify(message){$('status').textContent=message;$('toast').textContent=message;$('toast').style.display='block';clearTimeout(notify.timer);notify.timer=setTimeout(()=>$('toast').style.display='none',4500)}
 function button(text,fn,cls='action'){const b=el('button',cls+' focusable',text);b.addEventListener('click',fn);return b}
 function setItems(items,source){state.items=items;state.source=source;state.filter='Todas';notify(`${items.length} contenidos · ${source}`);render(state.view==='settings'?'live':state.view)}
-function render(view){state.view=view;const titles={live:'TV en vivo',movies:'Películas',series:'Series',favorites:'Favoritos',settings:'Configuración',p2p:'Buscar P2P'};$('title').textContent=titles[view];document.querySelectorAll('.nav').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));$('toolbar').replaceChildren();$('content').replaceChildren();if(view==='settings')renderSettings();else if(view==='p2p')renderP2P();else renderCatalog();nav.focus(document.querySelector(`.nav[data-view="${view}"]`))}
+function render(view){state.view=view;const titles={live:'TV en vivo',movies:'Películas',series:'Series',favorites:'Favoritos',settings:'Configuración',p2p:'Buscar P2P'};$('title').textContent=titles[view];document.querySelectorAll('.nav').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));$('toolbar').replaceChildren();$('content').replaceChildren();if(view==='settings')renderSettings();else if(view==='p2p')renderP2P();else if(view==='movies'||view==='series')renderCinema();else renderCatalog();nav.focus(document.querySelector(`.nav[data-view="${view}"]`))}
 function isFav(item){return state.favorites.includes(item.url||item.name)}
 function toggleFav(item){const id=item.url||item.name;state.favorites=isFav(item)?state.favorites.filter(x=>x!==id):[...state.favorites,id];storage.write('tvfefe-favorites-v3',state.favorites);render(state.view)}
 function renderCatalog(){const root=$('content');let items=state.view==='favorites'?state.items.filter(isFav):state.items.filter(x=>x.kind===state.view);if(state.view==='movies'||state.view==='series'){const total=items.length;items=items.filter(x=>x.languageVerified===true&&(x.audioLanguage==='es-419'||(x.audioLanguage==='en'&&x.subtitleLanguage==='es')));const info=el('p','help',`Catálogo con idioma verificado: ${items.length} de ${total}. Preferencia: español latino; alternativa: inglés con subtítulos en español. Los elementos sin verificación no se muestran.`);root.append(info)}const search=el('input','search focusable');search.placeholder='Buscar contenido';search.setAttribute('aria-label','Buscar contenido');$('toolbar').append(search);const category=el('select','focusable');const cats=['Todas',...new Set(items.map(x=>x.group||'General'))];for(const c of cats){const option=el('option','',c);option.value=c;category.append(option)}category.value=cats.includes(state.filter)?state.filter:'Todas';$('toolbar').append(category);const list=el('div');root.append(list);const paint=()=>{list.replaceChildren();const query=search.value.toLocaleLowerCase();const selected=items.filter(x=>(category.value==='Todas'||x.group===category.value)&&x.name.toLocaleLowerCase().includes(query));if(!selected.length){list.append(el('p','empty','No hay contenidos para mostrar. Usa Configuración para cargar una lista o activar las demostraciones.'));return}const groups=[...new Set(selected.map(x=>x.group||'General'))];for(const group of groups){list.append(el('h2','section-heading',group));const grid=el('div','grid');for(const item of selected.filter(x=>(x.group||'General')===group)){const tile=button('',()=>openItem(item),'tile');tile.setAttribute('aria-label','Reproducir '+item.name);if(item.logo&&safeHttpURL(item.logo)){const img=el('img');img.src=item.logo;img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>img.replaceWith(el('div','placeholder','▶'));tile.append(img)}else tile.append(el('div','placeholder','▶'));tile.append(el('strong','',item.name));tile.append(el('small','',item.kind==='live'?'Canal':item.kind==='series'?'Serie':'Video'));const star=button(isFav(item)?'★ Favorito':'☆ Favorito',()=>toggleFav(item),'filter fav');grid.append(tile,star)}list.append(grid)}};category.addEventListener('change',()=>{state.filter=category.value;paint()});search.addEventListener('input',paint);paint()}
+
+function renderCinema(){
+ const root=$('content'),bar=$('toolbar');
+ const heading=el('p','help','Catálogo audiovisual: solamente obras con derechos e idioma comprobados. P2P se administra por separado.');root.append(heading);
+ const search=el('input','search focusable');search.placeholder='Buscar título, año o género';search.setAttribute('aria-label','Buscar títulos');bar.append(search);
+ const genre=el('select','focusable');genre.setAttribute('aria-label','Filtrar género');bar.append(genre);
+ const results=el('div','cinema-grid');root.append(results);
+ const paint=()=>{
+  const items=state.cinema.filter(x=>x.kind===state.view);
+  genre.replaceChildren();for(const name of ['Todos los géneros',...new Set(items.map(x=>x.group||'Cine'))]){
+   const option=el('option','',name);option.value=name;genre.append(option);
+  }
+  const term=search.value.trim().toLocaleLowerCase();
+  const matched=items.filter(x=>(genre.value==='Todos los géneros'||x.group===genre.value)&&[x.name,x.group,String(x.year)].some(v=>String(v||'').toLocaleLowerCase().includes(term)));
+  results.replaceChildren();
+  if(!matched.length){
+   const empty=el('div','cinema-empty');
+   empty.append(el('h2','','Catálogo en preparación'));
+   empty.append(el('p','help','Todavía no hay títulos con reproducción, derechos e idioma verificados. No se añadirán automáticamente películas sin comprobar.'));
+   empty.append(button('Abrir buscador P2P autorizado',()=>render('p2p'),'primary'));
+   results.append(empty);return;
+  }
+  for(const item of matched){
+   const card=el('article','cinema-card');
+   const cover=el('div','cinema-cover');
+   if(item.logo&&safeHttpURL(item.logo)){
+    const img=el('img');img.src=item.logo;img.alt='Carátula de '+item.name;img.loading='lazy';img.onerror=()=>img.replaceWith(el('div','cinema-placeholder','▶'));cover.append(img);
+   }else cover.append(el('div','cinema-placeholder','▶'));
+   card.append(cover);
+   const info=el('div','cinema-info');
+   info.append(el('strong','',item.name));
+   info.append(el('p','cinema-meta',[item.year,item.group,item.audioLanguage==='es-419'?'Español latino':'Inglés · subtítulos ES'].filter(Boolean).join(' · ')));
+   if(item.synopsis)info.append(el('p','cinema-synopsis',item.synopsis));
+   const actions=el('div','cinema-actions');actions.append(button('▶ Reproducir',()=>openItem(item),'primary'));
+   actions.append(button(isFav(item)?'★ Favorito':'☆ Favorito',()=>toggleFav(item),'action'));
+   info.append(actions);card.append(info);results.append(card);
+  }
+ };
+ let lastGenre='Todos los géneros';
+ genre.addEventListener('change',()=>{lastGenre=genre.value;paint()});
+ search.addEventListener('input',()=>{const selected=genre.value;paint();genre.value=selected;});
+ paint();
+}
+async function refreshCinema(){
+ try{state.cinema=await loadCinemaCatalog();if(state.view==='movies'||state.view==='series')render(state.view)}
+ catch(e){notify('Catálogo audiovisual: '+e.message)}
+}
 async function openItem(item){if(item.seriesId&&!item.url){try{notify('Cargando episodios…');const episodes=await loadEpisodes(state.config,item.seriesId);if(!episodes.length)throw Error('No hay episodios disponibles');state.items=[...state.items.filter(x=>x.group!=='Episodios seleccionados'),...episodes.map(x=>({...x,group:'Episodios seleccionados'}))];state.filter='Episodios seleccionados';render('series')}catch(e){notify('Error de serie: '+e.message)}return}if(!item.url)return notify('Este contenido no tiene enlace de reproducción');activeTvItem=item;state.lastFocus=nav.current;$('player').hidden=false;$('playingTitle').textContent=item.name;$('videoError').hidden=true;nav.focus($('playPause'));showControls();await player.play(item.url);updatePlayState()}
 function updatePlayState(){$('playPause').textContent=$('video').paused?'▶ Reproducir':'❚❚ Pausar';$('playState').textContent=$('video').paused?'Pausado':'Reproduciendo'}
 function showControls(){$('controls').classList.remove('hidden');clearTimeout(state.hideTimer);state.hideTimer=setTimeout(()=>{if($('tvChannels').hidden)$('controls').classList.add('hidden')},5500)}
@@ -181,6 +229,7 @@ $('tvClose').addEventListener('click',tvCloseChannels);
 $('tvChannelTop')?.addEventListener('click',()=>{if($('tvChannels').hidden)tvOpenChannels();else tvCloseChannels()});
 
 render('live');loadSource(AUTO_LISTS[0]);
+refreshCinema();
 if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
 
 window.__tvFefeReady=true;
