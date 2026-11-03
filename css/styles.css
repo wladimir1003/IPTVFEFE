@@ -12,3 +12,13 @@ input,textarea,select{user-select:text;-webkit-user-select:text;touch-action:man
 .tv-channel{display:flex;align-items:center;gap:12px;width:100%;padding:13px;margin:5px 0;border-radius:10px;background:#ffffff10;text-align:left}.tv-channel:hover,.tv-channel:focus-visible{background:#ffffff30}.tv-channel.active{background:#e9563e80}.tv-channel img{width:36px;height:36px;object-fit:contain}.tv-channel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #tvChannelToggle{background:#30435b;border-radius:10px;padding:12px 17px}
 @media(max-width:520px){#tvInfo{padding:12px;font-size:13px}#tvChannels{width:90vw;padding:12px}}
+
+/* Canalera v2: siempre sobre los controles y accesible desde el mando */
+#tvChannels{z-index:30!important;display:block;visibility:visible;pointer-events:auto;overscroll-behavior:contain}
+#tvChannels[hidden]{display:none!important}
+#tvChannelToggle{position:relative;z-index:8;cursor:pointer}
+#tvChannels button{color:#fff;cursor:pointer}
+#tvChannels .tv-channel{border:1px solid #ffffff20;min-height:54px}
+#tvChannels .tv-channel:focus-visible{outline:3px solid #56d9ff;outline-offset:1px}
+#controls{z-index:6}
+#tvInfo{z-index:4}
