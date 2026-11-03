@@ -4,3 +4,11 @@
 
 /* TV FEFE v3: campos siempre editables y legibles */
 input,textarea,select{user-select:text;-webkit-user-select:text;touch-action:manipulation}textarea{font:inherit}input[type=url]{overflow-x:auto}.settings .field{margin-bottom:4px}
+
+/* TV FEFE: información persistente y zapping sobre video */
+#tvInfo{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 24px;background:linear-gradient(#000c,transparent);z-index:3;color:white;font-weight:700;text-shadow:0 1px 4px #000;pointer-events:none}
+#tvChannels{position:absolute;right:0;top:0;bottom:0;width:min(420px,85vw);z-index:5;background:#101c2be8;backdrop-filter:blur(16px);border-left:1px solid #ffffff30;overflow-y:auto;padding:20px;box-shadow:-12px 0 40px #0007}
+#tvChannels[hidden]{display:none!important}.tv-channels-head{display:flex;justify-content:space-between;align-items:center;margin:28px 0 18px}.tv-channels-head button{background:#30435b;border-radius:8px;padding:8px 14px}
+.tv-channel{display:flex;align-items:center;gap:12px;width:100%;padding:13px;margin:5px 0;border-radius:10px;background:#ffffff10;text-align:left}.tv-channel:hover,.tv-channel:focus-visible{background:#ffffff30}.tv-channel.active{background:#e9563e80}.tv-channel img{width:36px;height:36px;object-fit:contain}.tv-channel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tvChannelToggle{background:#30435b;border-radius:10px;padding:12px 17px}
+@media(max-width:520px){#tvInfo{padding:12px;font-size:13px}#tvChannels{width:90vw;padding:12px}}
