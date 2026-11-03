@@ -1,5 +1,8 @@
 name: Actualizar lista Chile M3U.CL
 on:
+  push:
+    paths:
+      - '.github/workflows/update-chile-m3u.yml'
   workflow_dispatch:
   schedule:
     - cron: '17 */6 * * *'
