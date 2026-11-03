@@ -67,7 +67,7 @@ function renderSettings(){
   const results=await Promise.allSettled(allSources().map(async src=>{const items=await fetchPlaylist(src.local||src.url);if(!items.length)throw Error('Vacía');return items.length}));
   const sources=allSources();let ok=0;results.forEach((r,i)=>{sourceStatus[sources[i].url]=r.status==='fulfilled'?'ok':'fail';if(r.status==='fulfilled')ok++});
   status.textContent=ok+' de '+sources.length+' listados descargaron su índice. Esto no verifica la reproducción de cada canal.';
-  const current=select.value;const next=makeSourceSelect();next.value=current;select.replaceWith(next);next.addEventListener('change',()=>{select.value=next.value});
+  for(const option of select.options){const src=allSources().find(x=>x.url===option.value);if(src)option.textContent=src.name+(sourceStatus[src.url]==='ok'?' · cargó':' · error')}
  }));
  free.append(actions);box.append(free);
  const fields=el('div','form-grid');
