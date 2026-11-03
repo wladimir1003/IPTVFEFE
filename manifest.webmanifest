@@ -1,1 +1,19 @@
-{"name":"Magma TV Player Latino Pro","short_name":"Magma TV","description":"Reproductor multimedia IPTV multiplataforma","start_url":"./","scope":"./","display":"standalone","background_color":"#090e18","theme_color":"#090e18","icons":[{"src":"assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{
+  "name": "TV FEFE",
+  "short_name": "TV FEFE",
+  "description": "TV FEFE - reproductor IPTV multiplataforma",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#090e18",
+  "theme_color": "#090e18",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "./"
+}

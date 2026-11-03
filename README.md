@@ -1,15 +1,22 @@
-# IPTVFEFE v2 — corrección de importación
+# TV FEFE v3 — GitHub Pages
 
-Publicación: subir **el contenido** de esta carpeta a la raíz del repositorio GitHub y activar Settings > Pages > main / (root).
+Aplicación IPTV HTML5 multiplataforma, con controles para TV, PC y móviles. **No contiene canales privados ni contraseñas.**
 
-## Prueba rápida
-1. Configuración > Chile M3U.CL > Cargar M3U.
-2. Si aparece `Failed to fetch`, abre la URL en otra pestaña y guarda el archivo `.m3u`, luego usa **Importar archivo M3U local**. Alternativamente pega el texto completo `#EXTM3U` en el área de texto y pulsa **Procesar texto M3U pegado**.
-3. Prueba también Chile IPTV-org y Español IPTV-org.
-4. El navegador puede cargar el catálogo pero no reproducir determinados canales por CORS, HTTP, geobloqueo, códecs o enlaces caducados.
+## Publicar
+1. Descomprime el ZIP. Sube **el contenido** a la raíz de tu repositorio `IPTVFEFE` (index.html debe quedar en raíz).
+2. GitHub → Settings → Pages → Deploy from branch → `main` / `(root)`.
+3. Abre `https://TU-USUARIO.github.io/IPTVFEFE/` y actualiza con Ctrl+F5.
+4. Si sigue apareciendo una versión antigua, elimina los datos del sitio y el service worker desde el navegador.
 
-## Importante
-GitHub Pages no puede eliminar CORS ni convertir streams HTTP a HTTPS. Para listas remotas que no habilitan CORS, se requiere un backend/proxy propio autorizado, o importación local. **No publiques credenciales**. Magma y PL Pro son presets de dirección, no cuentas validadas.
+## Listas y CORS
+- En Configuración, puedes pegar una URL M3U en el input y pulsar Cargar M3U.
+- Si el servidor no permite CORS, descarga la lista y usa **Importar archivo M3U** o pega el texto M3U.
+- Alternativa para **listas públicas permitidas**: crea un Cloudflare Worker con `cloudflare-worker/worker.js`, cambia `ALLOWED_ORIGIN` por `https://TU-USUARIO.github.io`, publica el Worker y pega su URL HTTPS base en el campo **URL de tu Cloudflare Worker**.
+- El Worker solo permite 3 listas públicas; no es un proxy universal ni transporta credenciales Xtream. La reproducción de cada canal puede fallar por CORS, DRM, códec o HTTPS.
+- Magma y PL Pro son perfiles de servidor editables; usa únicamente cuentas autorizadas. GitHub Pages no puede acceder a servidores HTTP ni resolver sus restricciones CORS.
 
-## Verificación
-`node --test tests/*.test.js` (requiere Node.js reciente). Las pruebas del parser son locales y no comprueban disponibilidad de canales.
+## Verificaciones
+`node --test tests/*.test.js` (requiere Node.js). También puedes ejecutar `node --check js/app.js` etc. El funcionamiento real debe probarse en el dispositivo.
+
+## Privacidad
+No subas claves ni credenciales a GitHub. Los datos ingresados se almacenan en localStorage del dispositivo; no los introduzcas en dispositivos compartidos.
