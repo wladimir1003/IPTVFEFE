@@ -31,3 +31,20 @@ input,textarea,select{user-select:text;-webkit-user-select:text;touch-action:man
 #tvChannels{z-index:40!important;top:0;bottom:0}
 #controls{z-index:10}
 @media(max-width:520px){#tvInfo{gap:5px}#tvChannelTop{padding:8px;font-size:12px}}
+
+
+/* Catálogo cinematográfico visual inspirado en aplicaciones de streaming, sin código ajeno. */
+.cinema-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:20px;padding:6px 0 40px}
+.cinema-card{background:linear-gradient(155deg,#1b2b42,#111c2c);border:1px solid #30415a;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;min-width:0;box-shadow:0 12px 25px #0004}
+.cinema-cover{aspect-ratio:2/3;background:linear-gradient(160deg,#2b415d,#0e1724);display:grid;place-items:center;max-height:340px;overflow:hidden}
+.cinema-cover img{width:100%;height:100%;object-fit:cover}
+.cinema-placeholder{font-size:70px;color:#ff987c;font-weight:700}
+.cinema-info{display:flex;flex-direction:column;gap:11px;flex:1;padding:17px}
+.cinema-info strong{font-size:20px;line-height:1.3}
+.cinema-meta{color:#a5b5cb;font-size:13px;margin:0;line-height:1.45}
+.cinema-synopsis{margin:0;color:#cdd8e7;font-size:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.cinema-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
+.cinema-actions button{font-size:14px;padding:10px}
+.cinema-empty{grid-column:1/-1;border:1px dashed #4b6079;border-radius:18px;padding:32px;background:#182637;max-width:680px}
+.cinema-empty h2{margin:0 0 12px}
+@media(max-width:650px){.cinema-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.cinema-info{padding:10px}.cinema-info strong{font-size:16px}.cinema-meta{font-size:12px}.cinema-actions{flex-direction:column}.cinema-cover{max-height:none}.cinema-empty{grid-column:1/-1}}
