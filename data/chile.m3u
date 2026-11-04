@@ -634,7 +634,7 @@ https://videostream.chileservidores.com:8081/universal/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="416" tvg-name="Sabor TV" tvg-logo="https://cdn.m3u.cl/logo/416_Sabor_TV.png", Sabor TV | CL
 https://v1.tustreaming.cl/sabortv/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="787" tvg-name="Radio Riquelme TV" tvg-logo="https://cdn.m3u.cl/logo/787_Radio_Riquelme_TV.png", Radio Riquelme TV | CL
-https://live20.bozztv.com/giatv/giatv-riquelme1350am/riquelme1350am/playlist.m3u8?PlaylistM3UCL
+https://openbroadcast.streamchileno.cl/live/597b23017c2b7597/llhls.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1646" tvg-name="Radio Frecuencia Uno" tvg-logo="https://cdn.m3u.cl/logo/1646_Radio_Frecuencia_Uno.png", Radio Frecuencia Uno | CL
 https://v1.tustreaming.cl/frecuencia1tv/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="418" tvg-name="Radio Rancagua" tvg-logo="https://cdn.m3u.cl/logo/418_Radio_Rancagua.png", Radio Rancagua | CL
