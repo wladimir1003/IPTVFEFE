@@ -488,7 +488,7 @@ https://us.streaminghd.cl/pacificotelevision/tracks-v1a1/mono.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1482" tvg-name="Eva Televisión" tvg-logo="https://cdn.m3u.cl/logo/1482_Eva_Television.png", Eva Televisión | CL
 https://tv.arkeo.cl:1936/evatelevision/evatelevision/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="355" tvg-name="Canal TV4" tvg-logo="https://cdn.m3u.cl/logo/355_Canal_TV4.png", Canal TV4 | CL
-https://edge.enhdtv.com/tv4/index.m3u8?PlaylistM3UCL
+https://v4.tustreaming.cl:2020/hls/tv4television/tv4television.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1148" tvg-name="Juntos TV" tvg-logo="https://cdn.m3u.cl/logo/1148_Juntos_TV.png", Juntos TV | CL
 https://video.juntostvchile.cl:8879/hls/web-jntv.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="948" tvg-name="San Pedro Conecta" tvg-logo="https://cdn.m3u.cl/logo/948_San_Pedro_Conecta.png", San Pedro Conecta | CL
