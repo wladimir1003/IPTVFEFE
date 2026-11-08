@@ -1,6 +1,6 @@
 #EXTM3U 
 #EXTINF:-1 tvg-id="156" tvg-name="Rewind" tvg-logo="https://cdn.m3u.cl/logo/156_Rewind.png", Rewind ✪ | CL
-https://tls-cl.cdnz.cl/rewindtv/live/playlist.m3u8?PlaylistM3UCL
+https://www.rewindmusic.cl/senal/m3u/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1771" tvg-name="Qultura" tvg-logo="https://cdn.m3u.cl/logo/1771_Qultura.png", Qultura ✪ | CL
 https://scl.edge.grupoz.cl/transmision/live/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="4" tvg-name="Retro Plus TV" tvg-logo="https://cdn.m3u.cl/logo/4_Retro_Plus_TV.png", Retro Plus TV ✪ | CL
