@@ -4,11 +4,11 @@ https://www.rewindmusic.cl/senal/m3u/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1771" tvg-name="Qultura" tvg-logo="https://cdn.m3u.cl/logo/1771_Qultura.png", Qultura ✪ | CL
 https://scl.edge.grupoz.cl/transmision/live/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="4" tvg-name="Retro Plus TV" tvg-logo="https://cdn.m3u.cl/logo/4_Retro_Plus_TV.png", Retro Plus TV ✪ | CL
-https://srt01.logicahost.com.br/senal1/index.m3u8?PlaylistM3UCL
+https://video06.logicahost.com.br/aretroplustv01/aretroplustv01/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="5" tvg-name="Retro Plus TV Señal 2" tvg-logo="https://cdn.m3u.cl/logo/5_Retro_Plus_TV_Senal_2.png", Retro Plus TV Señal 2 ✪ | CL
-https://srt01.logicahost.com.br/senal2/index.m3u8?PlaylistM3UCL
+https://video06.logicahost.com.br/aretroplustv02/aretroplustv02/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="465" tvg-name="Retro Plus TV Señal 3" tvg-logo="https://cdn.m3u.cl/logo/465_Retro_Plus_TV_Senal_3.png", Retro Plus TV Señal 3 ✪ | CL
-https://srt01.logicahost.com.br/senal3/index.m3u8?PlaylistM3UCL
+https://video06.logicahost.com.br/aretroplustv03/aretroplustv03/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1160" tvg-name="VClassicTV" tvg-logo="https://cdn.m3u.cl/logo/1160_VClassicTV.png", VClassicTV ✪ | CL
 https://5eaccbab48461.streamlock.net:1936/8112/8112/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1255" tvg-name="VClassicTV Tropical" tvg-logo="https://cdn.m3u.cl/logo/1255_VClassicTV_Tropical.png", VClassicTV Tropical ✪ | CL
