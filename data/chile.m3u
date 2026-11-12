@@ -624,7 +624,7 @@ https://tv.arkeo.cl:1936/ritmofm/ritmofm/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="987" tvg-name="Emocion TV" tvg-logo="https://cdn.m3u.cl/logo/987_Emocion_TV.png", Emocion TV | CL
 https://v1.tustreaming.cl/emociontv/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="387" tvg-name="Zona Play Radio" tvg-logo="https://cdn.m3u.cl/logo/387_Zona_Play_Radio.png", Zona Play Radio | CL
-https://tv1.mediacp.eu:3131/live/dilxbgxylive.m3u8?PlaylistM3UCL
+https://play.video.serverroom.net/server-xjhz5t/livestream/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="786" tvg-name="Tributo Valentina" tvg-logo="https://cdn.m3u.cl/logo/786_Tributo_Valentina.png", Tributo Valentina | CL
 https://vdochile.com:3795/hybrid/play.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="974" tvg-name="Patagonia Radio TV" tvg-logo="https://cdn.m3u.cl/logo/974_Patagonia_Radio_TV.png", Patagonia Radio TV | CL
