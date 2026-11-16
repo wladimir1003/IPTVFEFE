@@ -260,7 +260,7 @@ https://tv.arkeo.cl:1936/unetev/unetev/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1001" tvg-name="La Granja TV" tvg-logo="https://cdn.m3u.cl/logo/1001_La_Granja_TV.png", La Granja TV | CL
 https://oracle.streaminghd.cl/8126/8126/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="67" tvg-name="Exprezion TV" tvg-logo="https://cdn.m3u.cl/logo/67_Exprezion_TV.png", Exprezion TV | CL
-https://lbgo.bozztv.com/ssh101/ssh101/exprezion2026/playlist.m3u8?PlaylistM3UCL
+https://stream2.blserver.cl/hls/expreziontv3/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="69" tvg-name="G Vision" tvg-logo="https://cdn.m3u.cl/logo/69_G_Vision.png", G Vision | CL
 https://videostream.chileservidores.com:8081/tome/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1600" tvg-name="Radio Caldera Vision" tvg-logo="https://cdn.m3u.cl/logo/1600_Radio_Caldera_Vision.png", Radio Caldera Vision | CL
