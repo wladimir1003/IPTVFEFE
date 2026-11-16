@@ -74,7 +74,7 @@ https://streampanelcp.palmundofm.cl/hls/palmundofm/visual/live.m3u8?PlaylistM3UC
 #EXTINF:-1 tvg-id="1801" tvg-name="Radio FM Dance" tvg-logo="https://cdn.m3u.cl/logo/1801_Radio_FM_Dance.png", Radio FM Dance ✪ | CL
 https://stream.radiofmdance.cl/memfs/9dbb05a1-60de-450c-b0b6-d2be5bf0126e.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1798" tvg-name="LCR Televisión" tvg-logo="https://cdn.m3u.cl/logo/1798_LCR_Television.png", LCR Televisión ✪ | CL
-https://stream.blserver.cl/hls/expresiontv/index.m3u8?PlaylistM3UCL
+https://stream2.blserver.cl/hls/expreziontv2/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1796" tvg-name="ShowtimeTV" tvg-logo="https://cdn.m3u.cl/logo/1796_ShowtimeTV.png", ShowtimeTV ✪ | CL
 https://stmv7.voxtvhd.com.br/showtimetv/showtimetv/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1793" tvg-name="TV Valdivia" tvg-logo="https://cdn.m3u.cl/logo/1793_TV_Valdivia.png", TV Valdivia ✪ | CL
@@ -774,7 +774,7 @@ https://tv.arkeo.cl:19360/8058/8058.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1760" tvg-name="Plenitud TV" tvg-logo="https://cdn.m3u.cl/logo/1760_Plenitud_TV.png", Plenitud TV | CL
 https://183.giatvcdn.com/giatvplayout7/giatv-208727/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1766" tvg-name="Plenitud Juvenil" tvg-logo="https://cdn.m3u.cl/logo/1766_Plenitud_Juvenil.png", Plenitud Juvenil | CL
-https://live20.bozztv.com/giatvplayout7/giatv-209259/tracks-v1a1/mono.ts.m3u8?PlaylistM3UCL
+https://183.giatvcdn.com/giatvplayout7/giatv-209259/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1789" tvg-name="Plenitud TV 2" tvg-logo="https://cdn.m3u.cl/logo/1789_Plenitud_TV_2.png", Plenitud TV 2 | CL
 https://183.giatvcdn.com/giatvplayout7/giatv-212033/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1779" tvg-name="La Tercera TV" tvg-logo="https://cdn.m3u.cl/logo/1779_La_Tercera_TV.png", La Tercera TV | CL
