@@ -372,7 +372,7 @@ https://paneltv.stream:19360/huasco/huasco.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1591" tvg-name="DCH" tvg-logo="https://cdn.m3u.cl/logo/1591_DCH.png", DCH | CL
 https://v4.tustreaming.cl/dchtv/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="462" tvg-name="Alternativa TV" tvg-logo="https://cdn.m3u.cl/logo/462_Alternativa_TV.png", Alternativa TV | CL
-https://live20.bozztv.com/giatv/giatv-alternativatv/alternativatv/playlist.m3u8?PlaylistM3UCL
+https://183.giatvcdn.com/giatv/giatv-alternativatv/alternativatv/chunks.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="322" tvg-name="Enfoque Digital TV" tvg-logo="https://cdn.m3u.cl/logo/322_Enfoque_Digital_TV.png", Enfoque Digital TV | CL
 https://5eaccbab48461.streamlock.net:1936/8074/8074/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1500" tvg-name="Radio RT" tvg-logo="https://cdn.m3u.cl/logo/1500_Radio_RT.png", Radio RT | CL
