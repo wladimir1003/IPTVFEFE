@@ -198,7 +198,7 @@ https://paneltv.stream:19360/chilevisual/chilevisual.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1473" tvg-name="Music PUQ" tvg-logo="https://cdn.m3u.cl/logo/1473_Music_PUQ.png", Music PUQ ✪ | CL
 https://vdochile.com:3131/live/redupxprlive.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1282" tvg-name="Galactika Media" tvg-logo="https://cdn.m3u.cl/logo/1282_Galactika_Media.png", Galactika Media ✪ | CL
-https://lbgo.bozztv.com/ssh101/ssh101/myevento20267/playlist.m3u8?PlaylistM3UCL
+https://tv.flownella.cl/galactikatv/stream.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1005" tvg-name="Onda Radio TV" tvg-logo="https://cdn.m3u.cl/logo/1005_Onda_Radio_TV.png", Onda Radio TV ✪ | CL
 https://tv.arkeo.cl:1936/ondaradiotv/ondaradiotv/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="386" tvg-name="Energia TV" tvg-logo="https://cdn.m3u.cl/logo/386_Energia_TV.png", Energia TV ✪ | CL
