@@ -57,6 +57,8 @@ https://183.bozztv.com/giatv/giatv-labrarnoticias/labrarnoticias/chunks.m3u8?Pla
 https://183.bozztv.com/giatv/giatv-radiolabrartv/radiolabrartv/chunks.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1812" tvg-name="Radio Los Muermos" tvg-logo="https://cdn.m3u.cl/logo/1812_Radio_Los_Muermos.png", Radio Los Muermos ✪ | CL
 https://cl-2.backend.energeek.cl/tvm/radiomuermos/index.fmp4.m3u8?PlaylistM3UCL
+#EXTINF:-1 tvg-id="1098" tvg-name="CRTV" tvg-logo="https://cdn.m3u.cl/logo/1098_CRTV.png", CRTV ✪ | CL
+https://stmv2.voxtvhd.com.br/crtvchile/crtvchile/playlist.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1808" tvg-name="Radio Isabella" tvg-logo="https://cdn.m3u.cl/logo/1808_Radio_Isabella.png", Radio Isabella ✪ | CL
 https://v2.tustreaming.cl/radioisabella/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1807" tvg-name="Suena TV" tvg-logo="https://cdn.m3u.cl/logo/1807_Suena_TV.png", Suena TV ✪ | CL
@@ -178,7 +180,7 @@ https://zonasurtv.camdvr.org/memfs/13151f31-e7bc-4c6f-ad9a-627831620867.m3u8?Pla
 #EXTINF:-1 tvg-id="1660" tvg-name="Tropical Ranchero" tvg-logo="https://cdn.m3u.cl/logo/1660_Tropical_Ranchero.png", Tropical Ranchero ✪ | CL
 https://radioxxx.ddns.net/hls/stream.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1651" tvg-name="TeleZeta Tropical" tvg-logo="https://cdn.m3u.cl/logo/1651_TeleZeta_Tropical.png", TeleZeta Tropical ✪ | CL
-https://stream.telezeta.cl/live/index.m3u8?PlaylistM3UCL
+https://video-stream.edz.cl/telezeta/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1649" tvg-name="EPA! TV" tvg-logo="https://cdn.m3u.cl/logo/1649_EPA__TV.png", EPA! TV ✪ | CL
 https://v4.tustreaming.cl/edusauriotv/index.m3u8?PlaylistM3UCL
 #EXTINF:-1 tvg-id="1630" tvg-name="Poesia TV" tvg-logo="https://cdn.m3u.cl/logo/1630_Poesia_TV.png", Poesia TV ✪ | CL
